@@ -17,128 +17,72 @@ if TYPE_CHECKING:
 
 
 def on_pretrain_routine_start(trainer: BaseTrainer) -> None:
-    """Called before the pretraining routine starts.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called before the pretraining routine starts."""
     pass
 
 
 def on_pretrain_routine_end(trainer: BaseTrainer) -> None:
-    """Called after the pretraining routine ends.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called after the pretraining routine ends."""
     pass
 
 
 def on_train_start(trainer: BaseTrainer) -> None:
-    """Called when the training starts.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called when the training starts."""
     pass
 
 
 def on_train_epoch_start(trainer: BaseTrainer) -> None:
-    """Called at the start of each training epoch.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called at the start of each training epoch."""
     pass
 
 
 def on_train_batch_start(trainer: BaseTrainer) -> None:
-    """Called at the start of each training batch.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called at the start of each training batch."""
     pass
 
 
 def optimizer_step(trainer: BaseTrainer) -> None:
-    """Called when the optimizer takes a step.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called when the optimizer takes a step."""
     pass
 
 
 def on_before_zero_grad(trainer: BaseTrainer) -> None:
-    """Called before the gradients are set to zero.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called before the gradients are set to zero."""
     pass
 
 
 def on_train_batch_end(trainer: BaseTrainer) -> None:
-    """Called at the end of each training batch.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called at the end of each training batch."""
     pass
 
 
 def on_train_epoch_end(trainer: BaseTrainer) -> None:
-    """Called at the end of each training epoch.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called at the end of each training epoch."""
     pass
 
 
 def on_fit_epoch_end(trainer: BaseTrainer) -> None:
-    """Called at the end of each fit epoch (train + val).
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called at the end of each fit epoch (train + val)."""
     pass
 
 
 def on_model_save(trainer: BaseTrainer) -> None:
-    """Called when the model is saved.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called when the model is saved."""
     pass
 
 
 def on_train_end(trainer: BaseTrainer) -> None:
-    """Called when the training ends.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called when the training ends."""
     pass
 
 
 def on_params_update(trainer: BaseTrainer) -> None:
-    """Called when the model parameters are updated.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called when the model parameters are updated."""
     pass
 
 
 def teardown(trainer: BaseTrainer) -> None:
-    """Called during the teardown of the training process.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Called during the teardown of the training process."""
     pass
 
 
@@ -146,38 +90,22 @@ def teardown(trainer: BaseTrainer) -> None:
 
 
 def on_val_start(validator: BaseValidator) -> None:
-    """Called when the validation starts.
-
-    Args:
-        validator: The BaseValidator instance managing the validation process.
-    """
+    """Called when the validation starts."""
     pass
 
 
 def on_val_batch_start(validator: BaseValidator) -> None:
-    """Called at the start of each validation batch.
-
-    Args:
-        validator: The BaseValidator instance managing the validation process.
-    """
+    """Called at the start of each validation batch."""
     pass
 
 
 def on_val_batch_end(validator: BaseValidator) -> None:
-    """Called at the end of each validation batch.
-
-    Args:
-        validator: The BaseValidator instance managing the validation process.
-    """
+    """Called at the end of each validation batch."""
     pass
 
 
 def on_val_end(validator: BaseValidator) -> None:
-    """Called when the validation ends.
-
-    Args:
-        validator: The BaseValidator instance managing the validation process.
-    """
+    """Called when the validation ends."""
     pass
 
 
@@ -185,47 +113,27 @@ def on_val_end(validator: BaseValidator) -> None:
 
 
 def on_predict_start(predictor: BasePredictor) -> None:
-    """Called when the prediction starts.
-
-    Args:
-        predictor: The BasePredictor instance managing the prediction process.
-    """
+    """Called when the prediction starts."""
     pass
 
 
 def on_predict_batch_start(predictor: BasePredictor) -> None:
-    """Called at the start of each prediction batch.
-
-    Args:
-        predictor: The BasePredictor instance managing the prediction process.
-    """
+    """Called at the start of each prediction batch."""
     pass
 
 
 def on_predict_batch_end(predictor: BasePredictor) -> None:
-    """Called at the end of each prediction batch.
-
-    Args:
-        predictor: The BasePredictor instance managing the prediction process.
-    """
+    """Called at the end of each prediction batch."""
     pass
 
 
 def on_predict_postprocess_end(predictor: BasePredictor) -> None:
-    """Called after the post-processing of the prediction ends.
-
-    Args:
-        predictor: The BasePredictor instance managing the prediction process.
-    """
+    """Called after the post-processing of the prediction ends."""
     pass
 
 
 def on_predict_end(predictor: BasePredictor) -> None:
-    """Called when the prediction ends.
-
-    Args:
-        predictor: The BasePredictor instance managing the prediction process.
-    """
+    """Called when the prediction ends."""
     pass
 
 
@@ -233,20 +141,12 @@ def on_predict_end(predictor: BasePredictor) -> None:
 
 
 def on_export_start(exporter: Exporter) -> None:
-    """Called when the model export starts.
-
-    Args:
-        exporter: The Exporter instance managing the model export process.
-    """
+    """Called when the model export starts."""
     pass
 
 
 def on_export_end(exporter: Exporter) -> None:
-    """Called when the model export ends.
-
-    Args:
-        exporter: The Exporter instance managing the model export process.
-    """
+    """Called when the model export ends."""
     pass
 
 

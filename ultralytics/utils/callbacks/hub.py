@@ -18,11 +18,7 @@ if TYPE_CHECKING:
 
 
 def on_pretrain_routine_start(trainer: BaseTrainer) -> None:
-    """Create a remote Ultralytics HUB session to log local model training.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Create a remote Ultralytics HUB session to log local model training."""
     if RANK in {-1, 0} and SETTINGS["hub"] is True and SETTINGS["api_key"] and trainer.hub_session is None:
         from ultralytics.hub.session import HUBTrainingSession
 
@@ -30,22 +26,14 @@ def on_pretrain_routine_start(trainer: BaseTrainer) -> None:
 
 
 def on_pretrain_routine_end(trainer: BaseTrainer) -> None:
-    """Initialize timers for upload rate limiting before training begins.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Initialize timers for upload rate limiting before training begins."""
     if session := getattr(trainer, "hub_session", None):
         # Start timer for upload rate limit
         session.timers = {"metrics": time(), "ckpt": time()}  # start timer for session rate limiting
 
 
 def on_fit_epoch_end(trainer: BaseTrainer) -> None:
-    """Upload training progress metrics to Ultralytics HUB at the end of each epoch.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Upload training progress metrics to Ultralytics HUB at the end of each epoch."""
     if session := getattr(trainer, "hub_session", None):
         # Upload metrics after validation ends
         all_plots = {
@@ -70,11 +58,7 @@ def on_fit_epoch_end(trainer: BaseTrainer) -> None:
 
 
 def on_model_save(trainer: BaseTrainer) -> None:
-    """Upload model checkpoints to Ultralytics HUB with rate limiting.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Upload model checkpoints to Ultralytics HUB with rate limiting."""
     if session := getattr(trainer, "hub_session", None):
         # Upload checkpoints with rate limiting
         is_best = trainer.best_fitness == trainer.fitness
@@ -85,11 +69,7 @@ def on_model_save(trainer: BaseTrainer) -> None:
 
 
 def on_train_end(trainer: BaseTrainer) -> None:
-    """Upload final model and metrics to Ultralytics HUB at the end of training.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Upload final model and metrics to Ultralytics HUB at the end of training."""
     if session := getattr(trainer, "hub_session", None):
         # Upload final model and metrics with exponential standoff
         LOGGER.info(f"{PREFIX}Syncing final model...")
@@ -104,39 +84,23 @@ def on_train_end(trainer: BaseTrainer) -> None:
 
 
 def on_train_start(trainer: BaseTrainer) -> None:
-    """Run events on train start.
-
-    Args:
-        trainer: The BaseTrainer instance managing the training process.
-    """
+    """Run events on train start."""
     events(trainer.args, trainer.device)
 
 
 def on_val_start(validator: BaseValidator) -> None:
-    """Run events on validation start.
-
-    Args:
-        validator: The BaseValidator instance managing the validation process.
-    """
+    """Run events on validation start."""
     if not validator.training:
         events(validator.args, validator.device)
 
 
 def on_predict_start(predictor: BasePredictor) -> None:
-    """Run events on predict start.
-
-    Args:
-        predictor: The BasePredictor instance managing the prediction process.
-    """
+    """Run events on predict start."""
     events(predictor.args, predictor.device)
 
 
 def on_export_start(exporter: Exporter) -> None:
-    """Run events on export start.
-
-    Args:
-        exporter: The Exporter instance managing the model export process.
-    """
+    """Run events on export start."""
     events(exporter.args, exporter.device)
 
 
