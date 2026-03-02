@@ -56,10 +56,10 @@ class ConsoleLogger:
         """Initialize console logger with optional batching.
 
         Args:
-            destination: API endpoint URL (http/https), local file path, or None.
-            batch_size: Lines to accumulate before flush (1 = immediate, higher = batched).
-            flush_interval: Max seconds between flushes when batching.
-            on_flush: Callback(content: str, line_count: int, chunk_id: int) for custom handling.
+            destination: Target destination for streaming (URL, Path, or None for callback-only).
+            batch_size: Number of lines to batch before flushing (default: 1 for immediate).
+            flush_interval: Seconds between automatic flushes (default: 5.0).
+            on_flush: Optional callback function called with batched content on flush.
         """
         self.destination = destination
         self.is_api = isinstance(destination, str) and destination.startswith(("http://", "https://"))
@@ -350,7 +350,7 @@ class SystemLogger:
     """
 
     def __init__(self) -> None:
-        """Initialize the system logger."""
+        """Initialize the system logger for monitoring CPU, RAM, disk, network, and GPU metrics."""
         import psutil  # scoped as slow import
 
         self.pynvml: Any = None

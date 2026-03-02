@@ -60,7 +60,18 @@ class Conv(nn.Module):
         d: int = 1,
         act: bool | nn.Module = True,
     ) -> None:
-        """Initialize Conv layer with given parameters."""
+        """Initialize Conv layer with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            d: Dilation.
+            act: Activation function.
+        """
         super().__init__()
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
         self.bn = nn.BatchNorm2d(c2)
@@ -96,7 +107,18 @@ class Conv2(Conv):
         d: int = 1,
         act: bool | nn.Module = True,
     ) -> None:
-        """Initialize Conv2 layer with given parameters."""
+        """Initialize Conv2 layer with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            d: Dilation.
+            act: Activation function.
+        """
         super().__init__(c1, c2, k, s, p, g=g, d=d, act=act)
         self.cv2 = nn.Conv2d(c1, c2, 1, s, autopad(1, p, d), groups=g, dilation=d, bias=False)  # add 1x1 conv
 
@@ -129,7 +151,14 @@ class LightConv(nn.Module):
     """
 
     def __init__(self, c1: int, c2: int, k: int = 1, act: nn.Module = nn.ReLU()) -> None:
-        """Initialize LightConv layer with given parameters."""
+        """Initialize LightConv layer with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size for depthwise convolution.
+            act: Activation function.
+        """
         super().__init__()
         self.conv1 = Conv(c1, c2, 1, act=False)
         self.conv2 = DWConv(c2, c2, k, act=act)
@@ -151,7 +180,16 @@ class DWConv(Conv):
         d: int = 1,
         act: bool | nn.Module = True,
     ) -> None:
-        """Initialize depth-wise convolution with given parameters."""
+        """Initialize depth-wise convolution with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            d: Dilation.
+            act: Activation function.
+        """
         super().__init__(c1, c2, k, s, g=math.gcd(c1, c2), d=d, act=act)
 
 
@@ -167,7 +205,16 @@ class DWConvTranspose2d(nn.ConvTranspose2d):
         p1: int = 0,
         p2: int = 0,
     ) -> None:
-        """Initialize depth-wise transpose convolution with given parameters."""
+        """Initialize depth-wise transpose convolution with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p1: Padding.
+            p2: Output padding.
+        """
         super().__init__(c1, c2, k, s, p1, p2, groups=math.gcd(c1, c2))
 
 
@@ -193,7 +240,17 @@ class ConvTranspose(nn.Module):
         bn: bool = True,
         act: bool | nn.Module = True,
     ) -> None:
-        """Initialize ConvTranspose layer with given parameters."""
+        """Initialize ConvTranspose layer with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            bn: Use batch normalization.
+            act: Activation function.
+        """
         super().__init__()
         self.conv_transpose = nn.ConvTranspose2d(c1, c2, k, s, p, bias=not bn)
         self.bn = nn.BatchNorm2d(c2) if bn else nn.Identity()
@@ -227,7 +284,17 @@ class Focus(nn.Module):
         g: int = 1,
         act: bool | nn.Module = True,
     ) -> None:
-        """Initialize Focus module with given parameters."""
+        """Initialize Focus module with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            act: Activation function.
+        """
         super().__init__()
         self.conv = Conv(c1 * 4, c2, k, s, p, g, act=act)
         # self.contract = Contract(gain=2)
@@ -260,7 +327,16 @@ class GhostConv(nn.Module):
         g: int = 1,
         act: bool | nn.Module = True,
     ) -> None:
-        """Initialize Ghost Convolution module with given parameters."""
+        """Initialize Ghost Convolution module with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            g: Groups.
+            act: Activation function.
+        """
         super().__init__()
         c_ = c2 // 2  # hidden channels
         self.cv1 = Conv(c1, c_, k, s, None, g, act=act)
@@ -303,7 +379,20 @@ class RepConv(nn.Module):
         bn: bool = False,
         deploy: bool = False,
     ) -> None:
-        """Initialize RepConv module with given parameters."""
+        """Initialize RepConv module with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            d: Dilation.
+            act: Activation function.
+            bn: Use batch normalization for identity branch.
+            deploy: Deploy mode for inference.
+        """
         super().__init__()
         assert k == 3 and p == 1
         self.g = g
@@ -413,7 +502,11 @@ class ChannelAttention(nn.Module):
     """
 
     def __init__(self, channels: int) -> None:
-        """Initialize Channel-attention module."""
+        """Initialize Channel-attention module.
+
+        Args:
+            channels: Number of input channels.
+        """
         super().__init__()
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Conv2d(channels, channels, 1, 1, 0, bias=True)
@@ -435,7 +528,11 @@ class SpatialAttention(nn.Module):
     """
 
     def __init__(self, kernel_size: int = 7) -> None:
-        """Initialize Spatial-attention module."""
+        """Initialize Spatial-attention module.
+
+        Args:
+            kernel_size: Size of the convolutional kernel for spatial attention (3 or 7).
+        """
         super().__init__()
         assert kernel_size in {3, 7}, "kernel size must be 3 or 7"
         padding = 3 if kernel_size == 7 else 1
@@ -458,7 +555,12 @@ class CBAM(nn.Module):
     """
 
     def __init__(self, c1: int, kernel_size: int = 7) -> None:
-        """Initialize CBAM with given parameters."""
+        """Initialize CBAM with given parameters.
+
+        Args:
+            c1: Number of input channels.
+            kernel_size: Size of the convolutional kernel for spatial attention.
+        """
         super().__init__()
         self.channel_attention = ChannelAttention(c1)
         self.spatial_attention = SpatialAttention(kernel_size)
@@ -476,7 +578,11 @@ class Concat(nn.Module):
     """
 
     def __init__(self, dimension: int = 1) -> None:
-        """Initialize Concat module."""
+        """Initialize Concat module.
+
+        Args:
+            dimension: Dimension along which to concatenate tensors.
+        """
         super().__init__()
         self.d = dimension
 
@@ -493,7 +599,11 @@ class Index(nn.Module):
     """
 
     def __init__(self, index: int = 0) -> None:
-        """Initialize Index module."""
+        """Initialize Index module.
+
+        Args:
+            index: Index to select from input.
+        """
         super().__init__()
         self.index = index
 
