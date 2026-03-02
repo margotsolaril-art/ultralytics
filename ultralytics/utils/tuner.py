@@ -128,9 +128,6 @@ def run_ray_tune(
         reduction_factor=3,
     )
 
-    # Define the callbacks for the hyperparameter search
-    tuner_callbacks = [WandbLoggerCallback(project="YOLOv8-tune")] if wandb else []
-
     # Create the Ray Tune hyperparameter search tuner
     tune_dir = get_save_dir(
         get_cfg(
@@ -153,7 +150,7 @@ def run_ray_tune(
                 trial_name_creator=lambda trial: f"{trial.trainable_name}_{trial.trial_id}",
                 trial_dirname_creator=lambda trial: f"{trial.trainable_name}_{trial.trial_id}",
             ),
-            run_config=RunConfig(callbacks=tuner_callbacks, storage_path=tune_dir.parent, name=tune_dir.name),
+            run_config=RunConfig(storage_path=tune_dir.parent, name=tune_dir.name),
         )
 
     # Run the hyperparameter search
