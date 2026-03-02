@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import math
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -27,8 +28,17 @@ __all__ = (
 )
 
 
-def autopad(k, p=None, d=1):  # kernel, padding, dilation
-    """Pad to 'same' shape outputs."""
+def autopad(k: int | Sequence[int], p: int | Sequence[int] | None = None, d: int = 1) -> int | Sequence[int]:
+    """Pad to 'same' shape outputs.
+
+    Args:
+        k: Kernel size (int or sequence).
+        p: Padding (int, sequence, or None for auto-pad).
+        d: Dilation.
+
+    Returns:
+        Padding value (int or sequence).
+    """
     if d > 1:
         k = d * (k - 1) + 1 if isinstance(k, int) else [d * (x - 1) + 1 for x in k]  # actual kernel-size
     if p is None:
@@ -48,43 +58,53 @@ class Conv(nn.Module):
 
     default_act = nn.SiLU()  # default activation
 
-    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 1,
+        s: int = 1,
+        p: int | Sequence[int] | None = None,
+        g: int = 1,
+        d: int = 1,
+        act: bool | nn.Module = True,
+    ) -> None:
         """Initialize Conv layer with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            p (int, optional): Padding.
-            g (int): Groups.
-            d (int): Dilation.
-            act (bool | nn.Module): Activation function.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            d: Dilation.
+            act: Activation function.
         """
         super().__init__()
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
         self.bn = nn.BatchNorm2d(c2)
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply convolution, batch normalization and activation to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.act(self.bn(self.conv(x)))
 
-    def forward_fuse(self, x):
+    def forward_fuse(self, x: torch.Tensor) -> torch.Tensor:
         """Apply convolution and activation without batch normalization.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.act(self.conv(x))
 
@@ -99,45 +119,55 @@ class Conv2(Conv):
         act (nn.Module): Activation function layer.
     """
 
-    def __init__(self, c1, c2, k=3, s=1, p=None, g=1, d=1, act=True):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 3,
+        s: int = 1,
+        p: int | Sequence[int] | None = None,
+        g: int = 1,
+        d: int = 1,
+        act: bool | nn.Module = True,
+    ) -> None:
         """Initialize Conv2 layer with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            p (int, optional): Padding.
-            g (int): Groups.
-            d (int): Dilation.
-            act (bool | nn.Module): Activation function.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            d: Dilation.
+            act: Activation function.
         """
         super().__init__(c1, c2, k, s, p, g=g, d=d, act=act)
         self.cv2 = nn.Conv2d(c1, c2, 1, s, autopad(1, p, d), groups=g, dilation=d, bias=False)  # add 1x1 conv
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply convolution, batch normalization and activation to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.act(self.bn(self.conv(x) + self.cv2(x)))
 
-    def forward_fuse(self, x):
+    def forward_fuse(self, x: torch.Tensor) -> torch.Tensor:
         """Apply fused convolution, batch normalization and activation to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.act(self.bn(self.conv(x)))
 
-    def fuse_convs(self):
+    def fuse_convs(self) -> None:
         """Fuse parallel convolutions."""
         w = torch.zeros_like(self.conv.weight.data)
         i = [x // 2 for x in w.shape[2:]]
@@ -157,27 +187,27 @@ class LightConv(nn.Module):
         conv2 (DWConv): Depthwise convolution layer.
     """
 
-    def __init__(self, c1, c2, k=1, act=nn.ReLU()):
+    def __init__(self, c1: int, c2: int, k: int = 1, act: nn.Module = nn.ReLU()) -> None:
         """Initialize LightConv layer with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size for depthwise convolution.
-            act (nn.Module): Activation function.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size for depthwise convolution.
+            act: Activation function.
         """
         super().__init__()
         self.conv1 = Conv(c1, c2, 1, act=False)
         self.conv2 = DWConv(c2, c2, k, act=act)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply 2 convolutions to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.conv2(self.conv1(x))
 
@@ -185,16 +215,24 @@ class LightConv(nn.Module):
 class DWConv(Conv):
     """Depth-wise convolution module."""
 
-    def __init__(self, c1, c2, k=1, s=1, d=1, act=True):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 1,
+        s: int = 1,
+        d: int = 1,
+        act: bool | nn.Module = True,
+    ) -> None:
         """Initialize depth-wise convolution with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            d (int): Dilation.
-            act (bool | nn.Module): Activation function.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            d: Dilation.
+            act: Activation function.
         """
         super().__init__(c1, c2, k, s, g=math.gcd(c1, c2), d=d, act=act)
 
@@ -202,16 +240,24 @@ class DWConv(Conv):
 class DWConvTranspose2d(nn.ConvTranspose2d):
     """Depth-wise transpose convolution module."""
 
-    def __init__(self, c1, c2, k=1, s=1, p1=0, p2=0):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 1,
+        s: int = 1,
+        p1: int = 0,
+        p2: int = 0,
+    ) -> None:
         """Initialize depth-wise transpose convolution with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            p1 (int): Padding.
-            p2 (int): Output padding.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p1: Padding.
+            p2: Output padding.
         """
         super().__init__(c1, c2, k, s, p1, p2, groups=math.gcd(c1, c2))
 
@@ -228,42 +274,51 @@ class ConvTranspose(nn.Module):
 
     default_act = nn.SiLU()  # default activation
 
-    def __init__(self, c1, c2, k=2, s=2, p=0, bn=True, act=True):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 2,
+        s: int = 2,
+        p: int = 0,
+        bn: bool = True,
+        act: bool | nn.Module = True,
+    ) -> None:
         """Initialize ConvTranspose layer with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            p (int): Padding.
-            bn (bool): Use batch normalization.
-            act (bool | nn.Module): Activation function.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            bn: Use batch normalization.
+            act: Activation function.
         """
         super().__init__()
         self.conv_transpose = nn.ConvTranspose2d(c1, c2, k, s, p, bias=not bn)
         self.bn = nn.BatchNorm2d(c2) if bn else nn.Identity()
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply transposed convolution, batch normalization and activation to input.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.act(self.bn(self.conv_transpose(x)))
 
-    def forward_fuse(self, x):
+    def forward_fuse(self, x: torch.Tensor) -> torch.Tensor:
         """Apply convolution transpose and activation to input.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.act(self.conv_transpose(x))
 
@@ -277,32 +332,41 @@ class Focus(nn.Module):
         conv (Conv): Convolution layer.
     """
 
-    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, act=True):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 1,
+        s: int = 1,
+        p: int | Sequence[int] | None = None,
+        g: int = 1,
+        act: bool | nn.Module = True,
+    ) -> None:
         """Initialize Focus module with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            p (int, optional): Padding.
-            g (int): Groups.
-            act (bool | nn.Module): Activation function.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            act: Activation function.
         """
         super().__init__()
         self.conv = Conv(c1 * 4, c2, k, s, p, g, act=act)
         # self.contract = Contract(gain=2)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply Focus operation and convolution to input tensor.
 
         Input shape is (B, C, H, W) and output shape is (B, c2, H/2, W/2).
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.conv(torch.cat((x[..., ::2, ::2], x[..., 1::2, ::2], x[..., ::2, 1::2], x[..., 1::2, 1::2]), 1))
         # return self.conv(self.contract(x))
@@ -321,30 +385,38 @@ class GhostConv(nn.Module):
         https://github.com/huawei-noah/Efficient-AI-Backbones
     """
 
-    def __init__(self, c1, c2, k=1, s=1, g=1, act=True):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 1,
+        s: int = 1,
+        g: int = 1,
+        act: bool | nn.Module = True,
+    ) -> None:
         """Initialize Ghost Convolution module with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            g (int): Groups.
-            act (bool | nn.Module): Activation function.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            g: Groups.
+            act: Activation function.
         """
         super().__init__()
         c_ = c2 // 2  # hidden channels
         self.cv1 = Conv(c1, c_, k, s, None, g, act=act)
         self.cv2 = Conv(c_, c_, 5, 1, None, c_, act=act)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply Ghost Convolution to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor with concatenated features.
+            Output tensor with concatenated features.
         """
         y = self.cv1(x)
         return torch.cat((y, self.cv2(y)), 1)
@@ -368,20 +440,32 @@ class RepConv(nn.Module):
 
     default_act = nn.SiLU()  # default activation
 
-    def __init__(self, c1, c2, k=3, s=1, p=1, g=1, d=1, act=True, bn=False, deploy=False):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        k: int = 3,
+        s: int = 1,
+        p: int = 1,
+        g: int = 1,
+        d: int = 1,
+        act: bool | nn.Module = True,
+        bn: bool = False,
+        deploy: bool = False,
+    ) -> None:
         """Initialize RepConv module with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            k (int): Kernel size.
-            s (int): Stride.
-            p (int): Padding.
-            g (int): Groups.
-            d (int): Dilation.
-            act (bool | nn.Module): Activation function.
-            bn (bool): Use batch normalization for identity branch.
-            deploy (bool): Deploy mode for inference.
+            c1: Number of input channels.
+            c2: Number of output channels.
+            k: Kernel size.
+            s: Stride.
+            p: Padding.
+            g: Groups.
+            d: Dilation.
+            act: Activation function.
+            bn: Use batch normalization for identity branch.
+            deploy: Deploy mode for inference.
         """
         super().__init__()
         assert k == 3 and p == 1
@@ -394,35 +478,34 @@ class RepConv(nn.Module):
         self.conv1 = Conv(c1, c2, k, s, p=p, g=g, act=False)
         self.conv2 = Conv(c1, c2, 1, s, p=(p - k // 2), g=g, act=False)
 
-    def forward_fuse(self, x):
+    def forward_fuse(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass for deploy mode.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         return self.act(self.conv(x))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass for training mode.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Output tensor.
+            Output tensor.
         """
         id_out = 0 if self.bn is None else self.bn(x)
         return self.act(self.conv1(x) + self.conv2(x) + id_out)
 
-    def get_equivalent_kernel_bias(self):
+    def get_equivalent_kernel_bias(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculate equivalent kernel and bias by fusing convolutions.
 
         Returns:
-            (torch.Tensor): Equivalent kernel
-            (torch.Tensor): Equivalent bias
+            Equivalent kernel and bias tensors.
         """
         kernel3x3, bias3x3 = self._fuse_bn_tensor(self.conv1)
         kernel1x1, bias1x1 = self._fuse_bn_tensor(self.conv2)
@@ -430,32 +513,31 @@ class RepConv(nn.Module):
         return kernel3x3 + self._pad_1x1_to_3x3_tensor(kernel1x1) + kernelid, bias3x3 + bias1x1 + biasid
 
     @staticmethod
-    def _pad_1x1_to_3x3_tensor(kernel1x1):
+    def _pad_1x1_to_3x3_tensor(kernel1x1: torch.Tensor | None) -> torch.Tensor | int:
         """Pad a 1x1 kernel to 3x3 size.
 
         Args:
-            kernel1x1 (torch.Tensor): 1x1 convolution kernel.
+            kernel1x1: 1x1 convolution kernel.
 
         Returns:
-            (torch.Tensor): Padded 3x3 kernel.
+            Padded 3x3 kernel or 0 if input is None.
         """
         if kernel1x1 is None:
             return 0
         else:
             return torch.nn.functional.pad(kernel1x1, [1, 1, 1, 1])
 
-    def _fuse_bn_tensor(self, branch):
+    def _fuse_bn_tensor(self, branch: Conv | nn.BatchNorm2d | None) -> tuple[torch.Tensor, torch.Tensor]:
         """Fuse batch normalization with convolution weights.
 
         Args:
-            branch (Conv | nn.BatchNorm2d | None): Branch to fuse.
+            branch: Branch to fuse.
 
         Returns:
-            kernel (torch.Tensor): Fused kernel.
-            bias (torch.Tensor): Fused bias.
+            Fused kernel and bias tensors.
         """
         if branch is None:
-            return 0, 0
+            return torch.tensor(0), torch.tensor(0)
         if isinstance(branch, Conv):
             kernel = branch.conv.weight
             running_mean = branch.bn.running_mean
@@ -476,11 +558,13 @@ class RepConv(nn.Module):
             gamma = branch.weight
             beta = branch.bias
             eps = branch.eps
+        else:
+            return torch.tensor(0), torch.tensor(0)
         std = (running_var + eps).sqrt()
         t = (gamma / std).reshape(-1, 1, 1, 1)
         return kernel * t, beta - running_mean * gamma / std
 
-    def fuse_convs(self):
+    def fuse_convs(self) -> None:
         """Fuse convolutions for inference by creating a single equivalent convolution."""
         if hasattr(self, "conv"):
             return
@@ -527,7 +611,7 @@ class ChannelAttention(nn.Module):
         """Initialize Channel-attention module.
 
         Args:
-            channels (int): Number of input channels.
+            channels: Number of input channels.
         """
         super().__init__()
         self.pool = nn.AdaptiveAvgPool2d(1)
@@ -538,10 +622,10 @@ class ChannelAttention(nn.Module):
         """Apply channel attention to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Channel-attended output tensor.
+            Channel-attended output tensor.
         """
         return x * self.act(self.fc(self.pool(x)))
 
@@ -556,11 +640,11 @@ class SpatialAttention(nn.Module):
         act (nn.Sigmoid): Sigmoid activation for attention weights.
     """
 
-    def __init__(self, kernel_size=7):
+    def __init__(self, kernel_size: int = 7) -> None:
         """Initialize Spatial-attention module.
 
         Args:
-            kernel_size (int): Size of the convolutional kernel (3 or 7).
+            kernel_size: Size of the convolutional kernel (3 or 7).
         """
         super().__init__()
         assert kernel_size in {3, 7}, "kernel size must be 3 or 7"
@@ -568,14 +652,14 @@ class SpatialAttention(nn.Module):
         self.cv1 = nn.Conv2d(2, 1, kernel_size, padding=padding, bias=False)
         self.act = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply spatial attention to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Spatial-attended output tensor.
+            Spatial-attended output tensor.
         """
         return x * self.act(self.cv1(torch.cat([torch.mean(x, 1, keepdim=True), torch.max(x, 1, keepdim=True)[0]], 1)))
 
@@ -590,25 +674,25 @@ class CBAM(nn.Module):
         spatial_attention (SpatialAttention): Spatial attention module.
     """
 
-    def __init__(self, c1, kernel_size=7):
+    def __init__(self, c1: int, kernel_size: int = 7) -> None:
         """Initialize CBAM with given parameters.
 
         Args:
-            c1 (int): Number of input channels.
-            kernel_size (int): Size of the convolutional kernel for spatial attention.
+            c1: Number of input channels.
+            kernel_size: Size of the convolutional kernel for spatial attention.
         """
         super().__init__()
         self.channel_attention = ChannelAttention(c1)
         self.spatial_attention = SpatialAttention(kernel_size)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply channel and spatial attention sequentially to input tensor.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            (torch.Tensor): Attended output tensor.
+            Attended output tensor.
         """
         return self.spatial_attention(self.channel_attention(x))
 
@@ -620,23 +704,23 @@ class Concat(nn.Module):
         d (int): Dimension along which to concatenate tensors.
     """
 
-    def __init__(self, dimension=1):
+    def __init__(self, dimension: int = 1) -> None:
         """Initialize Concat module.
 
         Args:
-            dimension (int): Dimension along which to concatenate tensors.
+            dimension: Dimension along which to concatenate tensors.
         """
         super().__init__()
         self.d = dimension
 
-    def forward(self, x: list[torch.Tensor]):
+    def forward(self, x: list[torch.Tensor]) -> torch.Tensor:
         """Concatenate input tensors along specified dimension.
 
         Args:
-            x (list[torch.Tensor]): List of input tensors.
+            x: List of input tensors.
 
         Returns:
-            (torch.Tensor): Concatenated tensor.
+            Concatenated tensor.
         """
         return torch.cat(x, self.d)
 
@@ -648,22 +732,22 @@ class Index(nn.Module):
         index (int): Index to select from input.
     """
 
-    def __init__(self, index=0):
+    def __init__(self, index: int = 0) -> None:
         """Initialize Index module.
 
         Args:
-            index (int): Index to select from input.
+            index: Index to select from input.
         """
         super().__init__()
         self.index = index
 
-    def forward(self, x: list[torch.Tensor]):
+    def forward(self, x: list[torch.Tensor]) -> torch.Tensor:
         """Select and return a particular index from input.
 
         Args:
-            x (list[torch.Tensor]): List of input tensors.
+            x: List of input tensors.
 
         Returns:
-            (torch.Tensor): Selected tensor.
+            Selected tensor.
         """
         return x[self.index]

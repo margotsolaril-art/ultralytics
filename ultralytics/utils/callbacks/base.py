@@ -1,143 +1,252 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """Base callbacks for Ultralytics training, validation, prediction, and export processes."""
 
+from __future__ import annotations
+
 from collections import defaultdict
 from copy import deepcopy
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ultralytics.engine.exporter import Exporter
+    from ultralytics.engine.predictor import BasePredictor
+    from ultralytics.engine.trainer import BaseTrainer
+    from ultralytics.engine.validator import BaseValidator
 
 # Trainer callbacks ----------------------------------------------------------------------------------------------------
 
 
-def on_pretrain_routine_start(trainer):
-    """Called before the pretraining routine starts."""
+def on_pretrain_routine_start(trainer: BaseTrainer) -> None:
+    """Called before the pretraining routine starts.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_pretrain_routine_end(trainer):
-    """Called after the pretraining routine ends."""
+def on_pretrain_routine_end(trainer: BaseTrainer) -> None:
+    """Called after the pretraining routine ends.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_train_start(trainer):
-    """Called when the training starts."""
+def on_train_start(trainer: BaseTrainer) -> None:
+    """Called when the training starts.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_train_epoch_start(trainer):
-    """Called at the start of each training epoch."""
+def on_train_epoch_start(trainer: BaseTrainer) -> None:
+    """Called at the start of each training epoch.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_train_batch_start(trainer):
-    """Called at the start of each training batch."""
+def on_train_batch_start(trainer: BaseTrainer) -> None:
+    """Called at the start of each training batch.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def optimizer_step(trainer):
-    """Called when the optimizer takes a step."""
+def optimizer_step(trainer: BaseTrainer) -> None:
+    """Called when the optimizer takes a step.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_before_zero_grad(trainer):
-    """Called before the gradients are set to zero."""
+def on_before_zero_grad(trainer: BaseTrainer) -> None:
+    """Called before the gradients are set to zero.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_train_batch_end(trainer):
-    """Called at the end of each training batch."""
+def on_train_batch_end(trainer: BaseTrainer) -> None:
+    """Called at the end of each training batch.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_train_epoch_end(trainer):
-    """Called at the end of each training epoch."""
+def on_train_epoch_end(trainer: BaseTrainer) -> None:
+    """Called at the end of each training epoch.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_fit_epoch_end(trainer):
-    """Called at the end of each fit epoch (train + val)."""
+def on_fit_epoch_end(trainer: BaseTrainer) -> None:
+    """Called at the end of each fit epoch (train + val).
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_model_save(trainer):
-    """Called when the model is saved."""
+def on_model_save(trainer: BaseTrainer) -> None:
+    """Called when the model is saved.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_train_end(trainer):
-    """Called when the training ends."""
+def on_train_end(trainer: BaseTrainer) -> None:
+    """Called when the training ends.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def on_params_update(trainer):
-    """Called when the model parameters are updated."""
+def on_params_update(trainer: BaseTrainer) -> None:
+    """Called when the model parameters are updated.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
-def teardown(trainer):
-    """Called during the teardown of the training process."""
+def teardown(trainer: BaseTrainer) -> None:
+    """Called during the teardown of the training process.
+
+    Args:
+        trainer: The BaseTrainer instance managing the training process.
+    """
     pass
 
 
 # Validator callbacks --------------------------------------------------------------------------------------------------
 
 
-def on_val_start(validator):
-    """Called when the validation starts."""
+def on_val_start(validator: BaseValidator) -> None:
+    """Called when the validation starts.
+
+    Args:
+        validator: The BaseValidator instance managing the validation process.
+    """
     pass
 
 
-def on_val_batch_start(validator):
-    """Called at the start of each validation batch."""
+def on_val_batch_start(validator: BaseValidator) -> None:
+    """Called at the start of each validation batch.
+
+    Args:
+        validator: The BaseValidator instance managing the validation process.
+    """
     pass
 
 
-def on_val_batch_end(validator):
-    """Called at the end of each validation batch."""
+def on_val_batch_end(validator: BaseValidator) -> None:
+    """Called at the end of each validation batch.
+
+    Args:
+        validator: The BaseValidator instance managing the validation process.
+    """
     pass
 
 
-def on_val_end(validator):
-    """Called when the validation ends."""
+def on_val_end(validator: BaseValidator) -> None:
+    """Called when the validation ends.
+
+    Args:
+        validator: The BaseValidator instance managing the validation process.
+    """
     pass
 
 
 # Predictor callbacks --------------------------------------------------------------------------------------------------
 
 
-def on_predict_start(predictor):
-    """Called when the prediction starts."""
+def on_predict_start(predictor: BasePredictor) -> None:
+    """Called when the prediction starts.
+
+    Args:
+        predictor: The BasePredictor instance managing the prediction process.
+    """
     pass
 
 
-def on_predict_batch_start(predictor):
-    """Called at the start of each prediction batch."""
+def on_predict_batch_start(predictor: BasePredictor) -> None:
+    """Called at the start of each prediction batch.
+
+    Args:
+        predictor: The BasePredictor instance managing the prediction process.
+    """
     pass
 
 
-def on_predict_batch_end(predictor):
-    """Called at the end of each prediction batch."""
+def on_predict_batch_end(predictor: BasePredictor) -> None:
+    """Called at the end of each prediction batch.
+
+    Args:
+        predictor: The BasePredictor instance managing the prediction process.
+    """
     pass
 
 
-def on_predict_postprocess_end(predictor):
-    """Called after the post-processing of the prediction ends."""
+def on_predict_postprocess_end(predictor: BasePredictor) -> None:
+    """Called after the post-processing of the prediction ends.
+
+    Args:
+        predictor: The BasePredictor instance managing the prediction process.
+    """
     pass
 
 
-def on_predict_end(predictor):
-    """Called when the prediction ends."""
+def on_predict_end(predictor: BasePredictor) -> None:
+    """Called when the prediction ends.
+
+    Args:
+        predictor: The BasePredictor instance managing the prediction process.
+    """
     pass
 
 
 # Exporter callbacks ---------------------------------------------------------------------------------------------------
 
 
-def on_export_start(exporter):
-    """Called when the model export starts."""
+def on_export_start(exporter: Exporter) -> None:
+    """Called when the model export starts.
+
+    Args:
+        exporter: The Exporter instance managing the model export process.
+    """
     pass
 
 
-def on_export_end(exporter):
-    """Called when the model export ends."""
+def on_export_end(exporter: Exporter) -> None:
+    """Called when the model export ends.
+
+    Args:
+        exporter: The Exporter instance managing the model export process.
+    """
     pass
 
 
@@ -174,13 +283,11 @@ default_callbacks = {
 }
 
 
-def get_default_callbacks():
+def get_default_callbacks() -> defaultdict[str, list]:
     """Get the default callbacks for Ultralytics training, validation, prediction, and export processes.
 
     Returns:
-        (dict): Dictionary of default callbacks for various training events. Each key represents an event during the
-            training process, and the corresponding value is a list of callback functions executed when that
-            event occurs.
+        A defaultdict mapping callback event names to lists of callback functions.
 
     Examples:
         >>> callbacks = get_default_callbacks()
@@ -190,17 +297,17 @@ def get_default_callbacks():
     return defaultdict(list, deepcopy(default_callbacks))
 
 
-def add_integration_callbacks(instance):
+def add_integration_callbacks(instance: BaseTrainer | BasePredictor | BaseValidator | Exporter) -> None:
     """Add integration callbacks to the instance's callbacks dictionary.
 
     This function loads and adds various integration callbacks to the provided instance. The specific callbacks added
-    depend on the type of instance provided. All instances receive HUB callbacks, while Trainer instances also receive
-    additional callbacks for various integrations like ClearML, Comet, DVC, MLflow, Neptune, Ray Tune, TensorBoard, and
-    Weights & Biases.
+    depend on the type of instance provided. All instances receive HUB and platform callbacks, while Trainer instances
+    also receive additional callbacks for various integrations like ClearML, Comet, DVC, MLflow, Neptune, Ray Tune,
+    TensorBoard, and Weights & Biases.
 
     Args:
-        instance (Trainer | Predictor | Validator | Exporter): The object instance to which callbacks will be added. The
-            type of instance determines which callbacks are loaded.
+        instance: The object instance to which callbacks will be added. The type of instance determines which
+            callbacks are loaded.
 
     Examples:
         >>> from ultralytics.engine.trainer import BaseTrainer

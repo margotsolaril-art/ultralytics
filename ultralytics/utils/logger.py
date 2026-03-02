@@ -1,12 +1,16 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+from __future__ import annotations
+
 import logging
 import shutil
 import sys
 import threading
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from ultralytics.utils import LOGGER, MACOS, RANK
 from ultralytics.utils.checks import check_requirements
@@ -42,14 +46,20 @@ class ConsoleLogger:
         >>> logger.start_capture()
     """
 
-    def __init__(self, destination=None, batch_size=1, flush_interval=5.0, on_flush=None):
+    def __init__(
+        self,
+        destination: str | Path | None = None,
+        batch_size: int = 1,
+        flush_interval: float = 5.0,
+        on_flush: Callable[[str, int, int], None] | None = None,
+    ) -> None:
         """Initialize console logger with optional batching.
 
         Args:
-            destination (str | Path | None): API endpoint URL (http/https), local file path, or None.
-            batch_size (int): Lines to accumulate before flush (1 = immediate, higher = batched).
-            flush_interval (float): Max seconds between flushes when batching.
-            on_flush (callable | None): Callback(content: str, line_count: int, chunk_id: int) for custom handling.
+            destination: API endpoint URL (http/https), local file path, or None.
+            batch_size: Lines to accumulate before flush (1 = immediate, higher = batched).
+            flush_interval: Max seconds between flushes when batching.
+            on_flush: Callback(content: str, line_count: int, chunk_id: int) for custom handling.
         """
         self.destination = destination
         self.is_api = isinstance(destination, str) and destination.startswith(("http://", "https://"))
@@ -68,9 +78,9 @@ class ConsoleLogger:
         self._log_handler = None  # Track handler for cleanup
 
         # Buffer for batching
-        self.buffer = []
+        self.buffer: list[str] = []
         self.buffer_lock = threading.Lock()
-        self.flush_thread = None
+        self.flush_thread: threading.Thread | None = None
         self.chunk_id = 0
 
         # Deduplication state
@@ -79,7 +89,7 @@ class ConsoleLogger:
         self.last_progress_line = ""  # Track progress sequence key for deduplication
         self.last_was_progress = False  # Track if last line was a progress bar
 
-    def start_capture(self):
+    def start_capture(self) -> None:
         """Start capturing console output and redirect stdout/stderr.
 
         Notes:
@@ -104,7 +114,7 @@ class ConsoleLogger:
             self.flush_thread = threading.Thread(target=self._flush_worker, daemon=True)
             self.flush_thread.start()
 
-    def stop_capture(self):
+    def stop_capture(self) -> None:
         """Stop capturing console output and flush remaining buffer."""
         if not self.active:
             return
@@ -124,8 +134,12 @@ class ConsoleLogger:
         # Final flush
         self._flush_buffer()
 
-    def _queue_log(self, text):
-        """Queue console text with deduplication and timestamp processing."""
+    def _queue_log(self, text: str) -> None:
+        """Queue console text with deduplication and timestamp processing.
+
+        Args:
+            text: The text to queue for logging.
+        """
         if not self.active:
             return
 
@@ -205,14 +219,14 @@ class ConsoleLogger:
             if should_flush:
                 self._flush_buffer()
 
-    def _flush_worker(self):
+    def _flush_worker(self) -> None:
         """Background worker that flushes buffer periodically."""
         while self.active:
             time.sleep(self.flush_interval)
             if self.active:
                 self._flush_buffer()
 
-    def _flush_buffer(self):
+    def _flush_buffer(self) -> None:
         """Flush buffered lines to destination and/or callback."""
         with self.buffer_lock:
             if not self.buffer:
@@ -236,8 +250,12 @@ class ConsoleLogger:
         if self.destination is not None:
             self._write_destination(content)
 
-    def _write_destination(self, content):
-        """Write content to file or API destination."""
+    def _write_destination(self, content: str) -> None:
+        """Write content to file or API destination.
+
+        Args:
+            content: The content to write.
+        """
         try:
             if self.is_api:
                 import requests
@@ -245,8 +263,8 @@ class ConsoleLogger:
                 payload = {"timestamp": datetime.now().isoformat(), "message": content}
                 requests.post(str(self.destination), json=payload, timeout=5)
             else:
-                self.destination.parent.mkdir(parents=True, exist_ok=True)
-                with self.destination.open("a", encoding="utf-8") as f:
+                self.destination.parent.mkdir(parents=True, exist_ok=True)  # type: ignore[union-attr]
+                with self.destination.open("a", encoding="utf-8") as f:  # type: ignore[union-attr]
                     f.write(content + "\n")
         except Exception as e:
             print(f"Console logger write error: {e}", file=self.original_stderr)
@@ -256,17 +274,26 @@ class ConsoleLogger:
 
         __slots__ = ("callback", "original")
 
-        def __init__(self, original, callback):
-            """Initialize a stream wrapper that redirects writes to a callback while preserving the original."""
+        def __init__(self, original, callback: Callable[[str], None]) -> None:
+            """Initialize a stream wrapper that redirects writes to a callback while preserving the original.
+
+            Args:
+                original: The original stream to wrap.
+                callback: The callback function to forward writes to.
+            """
             self.original = original
             self.callback = callback
 
-        def write(self, text):
-            """Write text to the original stream and forward it to the capture callback."""
+        def write(self, text: str) -> None:
+            """Write text to the original stream and forward it to the capture callback.
+
+            Args:
+                text: The text to write.
+            """
             self.original.write(text)
             self.callback(text)
 
-        def flush(self):
+        def flush(self) -> None:
             """Flush the wrapped stream to propagate buffered output promptly during console capture."""
             self.original.flush()
 
@@ -275,13 +302,21 @@ class ConsoleLogger:
 
         __slots__ = ("callback",)
 
-        def __init__(self, callback):
-            """Initialize a lightweight logging.Handler that forwards log records to the provided callback."""
+        def __init__(self, callback: Callable[[str], None]) -> None:
+            """Initialize a lightweight logging.Handler that forwards log records to the provided callback.
+
+            Args:
+                callback: The callback function to forward formatted log records to.
+            """
             super().__init__()
             self.callback = callback
 
-        def emit(self, record):
-            """Format and forward LogRecord messages to the capture callback for unified log streaming."""
+        def emit(self, record: logging.LogRecord) -> None:
+            """Format and forward LogRecord messages to the capture callback for unified log streaming.
+
+            Args:
+                record: The log record to emit.
+            """
             self.callback(self.format(record) + "\n")
 
 
@@ -314,11 +349,11 @@ class SystemLogger:
         ...     # Log to database/file
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the system logger."""
         import psutil  # scoped as slow import
 
-        self.pynvml = None
+        self.pynvml: Any = None
         self.nvidia_initialized = self._init_nvidia()
         self.net_start = psutil.net_io_counters()
         self.disk_start = psutil.disk_io_counters()
@@ -328,8 +363,12 @@ class SystemLogger:
         self._prev_disk = self.disk_start
         self._prev_time = time.time()
 
-    def _init_nvidia(self):
-        """Initialize NVIDIA GPU monitoring with pynvml."""
+    def _init_nvidia(self) -> bool:
+        """Initialize NVIDIA GPU monitoring with pynvml.
+
+        Returns:
+            True if NVIDIA GPU monitoring was successfully initialized, False otherwise.
+        """
         if MACOS:
             return False
 
@@ -345,7 +384,7 @@ class SystemLogger:
                 LOGGER.warning(f"SystemLogger NVML init failed: {e}")
             return False
 
-    def get_metrics(self, rates=False):
+    def get_metrics(self, rates: bool = False) -> dict[str, Any]:
         """Get current system metrics including CPU, RAM, disk, network, and GPU usage.
 
         Collects comprehensive system metrics including CPU usage, RAM usage, disk I/O statistics, network I/O
@@ -379,10 +418,10 @@ class SystemLogger:
         ```
 
         Args:
-            rates (bool): If True, return disk/network as MB/s rates instead of cumulative MB.
+            rates: If True, return disk/network as MB/s rates instead of cumulative MB.
 
         Returns:
-            (dict): Metrics dictionary with cpu, ram, disk, network, and gpus keys.
+            Metrics dictionary with cpu, ram, disk, network, and gpus keys.
 
         Examples:
             >>> logger = SystemLogger()
@@ -397,7 +436,7 @@ class SystemLogger:
         disk_usage = shutil.disk_usage("/")
         now = time.time()
 
-        metrics = {
+        metrics: dict[str, Any] = {
             "cpu": round(psutil.cpu_percent(), 3),
             "ram": round(memory.percent, 3),
             "gpus": {},
@@ -440,9 +479,13 @@ class SystemLogger:
 
         return metrics
 
-    def _get_nvidia_metrics(self):
-        """Get NVIDIA GPU metrics including utilization, memory, temperature, and power."""
-        gpus = {}
+    def _get_nvidia_metrics(self) -> dict[str, dict[str, int | float]]:
+        """Get NVIDIA GPU metrics including utilization, memory, temperature, and power.
+
+        Returns:
+            Dictionary mapping GPU index strings to their metrics dictionaries.
+        """
+        gpus: dict[str, dict[str, int | float]] = {}
         if not self.nvidia_initialized or not self.pynvml:
             return gpus
         try:
